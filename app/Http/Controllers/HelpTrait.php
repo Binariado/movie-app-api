@@ -2,9 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TokenSwagger;
-use Illuminate\Support\Facades\Auth;
-
 trait HelpTrait
 {
 

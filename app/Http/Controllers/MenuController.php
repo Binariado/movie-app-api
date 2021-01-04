@@ -6,6 +6,7 @@ use App\Http\Controllers\ResponseTrait;
 use App\Models\Menu;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Permission;
 
 class MenuController extends Controller
 {
@@ -13,26 +14,43 @@ class MenuController extends Controller
 
   public function listMenu()
   {
-    $menu = Menu::all();
-    $user = User::find(Auth::user()->id);
+    try {
+      $menu = Menu::all();
+      $user = false;
 
-    $menuPermission = $menu->filter(function ($value) use ($user) {
-      $perm = $value->permission;
-      return !$perm ? false : $user->can($value->permission);
-    });
+      if (Auth::check()) {
+        $user = User::find(Auth::user()->id);
+      }
 
-    $menuPermission->map(function ($value) use ($menuPermission) {
-      $value->items = $menuPermission->where('parent_id', $value->id);
-      $value->items = $value->items->flatten();
-      return $value;
-    });
+      $menuPermission = $menu->filter(function ($value) use ($user) {
+        $perm = $value->permission;
+        $Permission = Permission::where('name', $perm)->exists();
+        if ($Permission) {
+          if ($user) {
+            return !$perm ? false : $user->can($value->permission);
+          }
+          return false;
+        }
+        return true;
+      });
 
-    $menu = $menuPermission->filter(function ($value) {
-      return $value->parent_id === 0;
-    });
+      $menuPermission->map(function ($value) use ($menuPermission) {
+        $value->items = $menuPermission->where('parent_id', $value->id);
+        $value->items = $value->items->flatten();
+        return $value;
+      });
 
-    $menu = $menu->flatten();
+      $menu = $menuPermission->filter(function ($value) {
+        return $value->parent_id === 0;
+      });
 
-    return $this->success(compact('menu'), 'list menu', 200);
+      $menu = $menu->flatten();
+
+      return $this->success(compact('menu'), 'list menu', 200);
+      
+    } catch (\Throwable $th) {
+      return $this->error('internal_server_error', 500);
+    }
   }
+
 }

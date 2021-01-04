@@ -28,9 +28,12 @@ Route::group([
 });
 
 Route::group([
-  'middleware' => ['jwt.verify'],
+  //'middleware' => ['jwt.verify'],
   'prefix' => 'menu',
 ], function () {
     Route::get('list-menu', 'App\Http\Controllers\MenuController@listMenu');
 });
 
+Route::group(['prefix' => 'movies'], function () {
+    Route::resource('/', 'App\Http\Controllers\MoviesController');
+});

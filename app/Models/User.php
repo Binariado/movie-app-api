@@ -2,63 +2,75 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 use Spatie\Permission\Traits\HasRoles;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable, HasRoles;
+  use HasFactory, Notifiable, HasRoles;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+  protected $appends = ['profile'];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-    
+  public function getProfileAttribute()
+  {
+    return Profile::where('user_id', $this->attributes['id'])
+      ->select(
+        "user_id",
+        "first_name",
+        "last_name",
+        "image_url"
+      )
+      ->first();
+  }
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+  /**
+   * The attributes that are mass assignable.
+   *
+   * @var array
+   */
+  protected $fillable = [
+    'name',
+    'email',
+    'password',
+  ];
 
-    public function getJWTIdentifier()
-    {
-        return $this->getKey();
-    }
+  /**
+   * The attributes that should be hidden for arrays.
+   *
+   * @var array
+   */
+  protected $hidden = [
+    'password',
+    'remember_token',
+  ];
 
-    public function getJWTCustomClaims()
-    {
-        return [];
-    }
+  /**
+   * The attributes that should be cast to native types.
+   *
+   * @var array
+   */
+  protected $casts = [
+    'email_verified_at' => 'datetime',
+  ];
 
-    /**
-     * Relations
-     */
-    public function token_generated()
-    {
-        return $this->hasMany(TokenSwagger::class);
-    }
+  public function getJWTIdentifier()
+  {
+    return $this->getKey();
+  }
+
+  public function getJWTCustomClaims()
+  {
+    return [];
+  }
+
+  /**
+   * Relations
+   */
+  public function token_generated()
+  {
+    return $this->hasMany(TokenApps::class);
+  }
 }
